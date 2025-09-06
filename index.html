@@ -1,0 +1,1776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unlimited Offline Attendance System</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Attendance System">
+    <meta name="msapplication-TileColor" content="#667eea">
+    <meta name="msapplication-TileImage" content="icon-144x144.png">
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Icons for various devices -->
+    <link rel="icon" type="image/png" sizes="72x72" href="icon-72x72.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="icon-96x96.png">
+    <link rel="icon" type="image/png" sizes="128x128" href="icon-128x128.png">
+    <link rel="icon" type="image/png" sizes="144x144" href="icon-144x144.png">
+    <link rel="icon" type="image/png" sizes="152x152" href="icon-152x152.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="384x384" href="icon-384x384.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512x512.png">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" sizes="72x72" href="icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="96x96" href="icon-96x96.png">
+    <link rel="apple-touch-icon" sizes="128x128" href="icon-128x128.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon-192x192.png">
+    
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="icon-72x72.png">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #4CAF50;
+            --error-color: #f44336;
+            --warning-color: #FFD700;
+            --text-dark: #333;
+            --text-light: #666;
+            --background-light: #f8f9fa;
+            --border-color: #ddd;
+            --shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            min-height: 100vh;
+            padding: 10px;
+            color: var(--text-dark);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+        .header {
+            text-align: center;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header h1 {
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+        }
+        .header p {
+            font-size: clamp(1rem, 2.5vw, 1.2rem);
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+        .current-time {
+            font-size: clamp(2rem, 6vw, 3.5rem);
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+            font-weight: bold;
+        }
+        .current-date {
+            font-size: clamp(1rem, 2.5vw, 1.3rem);
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin: 10px auto;
+            position: relative;
+            z-index: 1;
+        }
+        .status-online {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+            border: 2px solid rgba(76, 175, 80, 0.3);
+        }
+        .status-offline {
+            background: rgba(255, 152, 0, 0.2);
+            color: #FF9800;
+            border: 2px solid rgba(255, 152, 0, 0.3);
+        }
+        .form-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .input-group label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: clamp(0.9rem, 2vw, 1rem);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .input-group input, .input-group select, .input-group textarea {
+            padding: 14px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: clamp(14px, 2.5vw, 16px);
+            transition: all 0.3s ease;
+            width: 100%;
+            background: white;
+            font-family: inherit;
+        }
+        .input-group textarea {
+            resize: vertical;
+            min-height: 80px;
+            max-height: 150px;
+        }
+        .input-group input:focus, .input-group select:focus, .input-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-1px);
+        }
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 25px 0;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 14px 28px;
+            font-size: clamp(14px, 2.5vw, 16px);
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            min-width: 160px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        .btn:active {
+            transform: translateY(-1px);
+        }
+        .btn-checkin {
+            background: linear-gradient(45deg, var(--success-color), #45a049);
+            color: white;
+        }
+        .btn-checkout {
+            background: linear-gradient(45deg, var(--error-color), #da190b);
+            color: white;
+        }
+        .btn-holiday {
+            background: linear-gradient(45deg, var(--warning-color), #FFAC33);
+            color: white;
+        }
+        .btn-delete {
+            background: #e74c3c;
+            color: white;
+            padding: 8px 16px;
+            font-size: 12px;
+            min-width: auto;
+            border-radius: 6px;
+        }
+        .btn-edit {
+            background: #3498db;
+            color: white;
+            padding: 8px 16px;
+            font-size: 12px;
+            min-width: auto;
+            border-radius: 6px;
+        }
+        .btn-install {
+            background: linear-gradient(45deg, #9c27b0, #673ab7);
+            color: white;
+            padding: 10px 20px;
+            font-size: 14px;
+            margin: 10px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-number {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .stat-label {
+            font-size: clamp(0.9rem, 2vw, 1rem);
+            opacity: 0.9;
+        }
+        .download-section {
+            background: var(--background-light);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        .download-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .download-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .btn-download, .btn-pdf {
+            background: linear-gradient(45deg, #2196F3, #1976D2);
+            color: white;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: clamp(14px, 2.5vw, 16px);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 140px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-pdf {
+            background: linear-gradient(45deg, #FF5722, #E64A19);
+        }
+        .table-container {
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .attendance-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+            min-width: 1200px;
+            background: white;
+        }
+        .attendance-table th,
+        .attendance-table td {
+            padding: 14px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            font-size: clamp(13px, 2vw, 14px);
+            vertical-align: top;
+        }
+        .attendance-table th {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .attendance-table tbody tr:hover {
+            background: #f8f9ff;
+            transform: scale(1.01);
+            transition: all 0.2s ease;
+        }
+        .holiday-row {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7) !important;
+            border-left: 4px solid var(--warning-color);
+        }
+        .description-cell {
+            max-width: 200px;
+            word-wrap: break-word;
+            font-size: 12px;
+            line-height: 1.3;
+            position: relative;
+        }
+        
+        .description-preview {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+            background: rgba(102, 126, 234, 0.05);
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .description-preview:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+        
+        .description-preview.clickable::after {
+            content: ' (Click to view)';
+            font-size: 10px;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        
+        .description-full {
+            max-height: none;
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: rgba(76, 175, 80, 0.05);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            line-height: 1.4;
+        }
+        
+        .status-message {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-size: clamp(14px, 2.5vw, 16px);
+            font-weight: 500;
+        }
+        .success {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+            border: 2px solid #b8dabd;
+        }
+        .error {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            color: #721c24;
+            border: 2px solid #f1b0b7;
+        }
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-light);
+            font-size: clamp(16px, 3vw, 18px);
+        }
+        
+        .install-banner {
+            background: linear-gradient(135deg, #9c27b0, #673ab7);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .install-banner.hidden {
+            display: none;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            padding: 15px;
+            backdrop-filter: blur(8px);
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            max-width: 750px;
+            width: 100%;
+            max-height: 95vh;
+            overflow: hidden;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px 30px 20px;
+            border-bottom: 2px solid #f0f0f0;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 20px 20px 0 0;
+        }
+        
+        .modal-header h3 {
+            font-size: clamp(1.3rem, 3vw, 1.6rem);
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .close-btn {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        
+        .close-btn:hover {
+            background: rgba(255,255,255,0.3);
+            border-color: rgba(255,255,255,0.5);
+            transform: scale(1.1);
+        }
+        
+        .modal-body {
+            padding: 30px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .edit-form {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .edit-form label {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: clamp(0.9rem, 2vw, 1rem);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .edit-form input, .edit-form select, .edit-form textarea {
+            padding: 14px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: clamp(14px, 2.5vw, 16px);
+            transition: all 0.3s ease;
+            width: 100%;
+            background: white;
+            font-family: inherit;
+        }
+        
+        .edit-form textarea {
+            resize: vertical;
+            min-height: 80px;
+            max-height: 120px;
+        }
+        
+        .edit-form input:focus, .edit-form select:focus, .edit-form textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .edit-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+            flex-wrap: wrap;
+        }
+        
+        .edit-buttons .btn {
+            min-width: 140px;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body { padding: 8px; }
+            .card { padding: 15px; margin-bottom: 15px; }
+            .form-group { grid-template-columns: 1fr; gap: 15px; }
+            .button-group { flex-direction: column; align-items: center; }
+            .btn { width: 100%; max-width: 300px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
+            .download-buttons { flex-direction: column; align-items: center; }
+            .attendance-table { min-width: 1000px; }
+            
+            .modal {
+                padding: 10px;
+            }
+            .modal-header {
+                padding: 20px 20px 15px;
+            }
+            .modal-body {
+                padding: 20px;
+            }
+            .edit-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            .edit-buttons .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .attendance-table th, .attendance-table td { padding: 10px 8px; font-size: 12px; }
+            .attendance-table { min-width: 900px; }
+            .current-time { font-size: clamp(1.5rem, 6vw, 2.2rem); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Install Banner -->
+        <div id="installBanner" class="install-banner hidden">
+            <div>
+                <strong>Install this app for offline use!</strong>
+                <p>Get better performance and work without internet connection.</p>
+            </div>
+            <div>
+                <button class="btn-install" onclick="installApp()">Install App</button>
+                <button class="close-btn" onclick="hideInstallBanner()" style="margin-left: 10px;">×</button>
+            </div>
+        </div>
+        
+        <!-- Header Section -->
+        <div class="card header">
+            <h1>Unlimited Attendance System</h1>
+            <p>Online/Offline | Unlimited Entries | Complete Freedom</p>
+            <div class="current-time" id="currentTime">00:00:00</div>
+            <div class="current-date" id="currentDate"></div>
+            <div id="connectionStatus" class="status-indicator status-online pulse">
+                <span id="statusIcon">●</span>
+                <span id="statusText">Online - Ready for unlimited entries</span>
+            </div>
+        </div>
+        
+        <!-- Employee Information -->
+        <div class="card">
+            <h2>Employee Information</h2>
+            <div class="form-group">
+                <div class="input-group">
+                    <label for="employeeName">👤 Employee Name:</label>
+                    <input type="text" id="employeeName" placeholder="Enter your full name" autocomplete="name">
+                </div>
+                <div class="input-group">
+                    <label for="employeeId">🆔 Employee ID:</label>
+                    <input type="text" id="employeeId" placeholder="Enter your employee ID" autocomplete="username">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Location Information -->
+        <div class="card">
+            <h2>Location & Notes</h2>
+            <div class="form-group">
+                <div class="input-group">
+                    <label for="checkInLocation">📍 Current Location:</label>
+                    <input type="text" id="checkInLocation" placeholder="Enter current location" list="locations">
+                    <datalist id="locations">
+                        <option value="Office - Main Building">
+                        <option value="Office - Branch">
+                        <option value="Home Office">
+                        <option value="Client Site">
+                        <option value="Co-working Space">
+                    </datalist>
+                </div>
+                <div class="input-group">
+                    <label for="workDescription">📝 Work Description/Notes:</label>
+                    <textarea id="workDescription" placeholder="Describe your work activities, meetings, projects, etc. (optional)"></textarea>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="card">
+            <h2>Quick Actions</h2>
+            <p>Multiple check-ins/check-outs allowed. Mark holidays anytime. Add descriptions to track your activities!</p>
+            <div class="button-group">
+                <button class="btn btn-checkin" onclick="checkIn()">
+                    ✅ Check In Now
+                </button>
+                <button class="btn btn-checkout" onclick="checkOut()">
+                    ❌ Check Out Now
+                </button>
+                <button class="btn btn-holiday" onclick="markHoliday()">
+                    🎉 Mark Holiday
+                </button>
+            </div>
+            <div id="statusMessage"></div>
+        </div>
+        
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalDays">0</div>
+                <div class="stat-label">Working Days</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalHours">0</div>
+                <div class="stat-label">Total Hours</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="holidayCount">0</div>
+                <div class="stat-label">Holidays Marked</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalEntries">0</div>
+                <div class="stat-label">Total Entries</div>
+            </div>
+        </div>
+        
+        <!-- Download Reports -->
+        <div class="card">
+            <div class="download-section">
+                <div class="download-header">
+                    <h3>📊 Download Reports</h3>
+                    <p>Export your attendance data with complete details including descriptions</p>
+                </div>
+                <div class="download-buttons">
+                    <button class="btn-download" onclick="downloadCSVReport()">
+                        📊 Download CSV
+                    </button>
+                    <button class="btn-pdf" onclick="downloadPDFReport()">
+                        📄 Download Report
+                    </button>
+                    <button class="btn btn-delete" onclick="deleteAllData()">
+                        🗑️ Clear All Data
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Attendance Records Table -->
+        <div class="card">
+            <h3>📋 Complete Attendance Records</h3>
+            <p>All entries with full edit capability and activity descriptions - no restrictions! Click on descriptions to view full text.</p>
+            <div class="table-container">
+                <table class="attendance-table">
+                    <thead>
+                        <tr>
+                            <th>📅 Date</th>
+                            <th>🕐 Check In</th>
+                            <th>📍 In Location</th>
+                            <th>🕕 Check Out</th>
+                            <th>📍 Out Location</th>
+                            <th>⏰ Duration</th>
+                            <th>📝 Description/Notes</th>
+                            <th>🎉 Holiday/Event</th>
+                            <th>👤 Employee</th>
+                            <th>⚙️ Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceTableBody">
+                    </tbody>
+                </table>
+            </div>
+            <div id="noDataMessage" class="no-data" style="display: none;">
+                📝 No attendance records yet. Start by checking in or marking a holiday!
+            </div>
+        </div>
+    </div>
+    
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ Edit Attendance Entry</h3>
+                <button class="close-btn" onclick="closeEdit()" title="Close Modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="edit-form">
+                    <div>
+                        <label>📅 Date:</label>
+                        <input type="date" id="editDate">
+                    </div>
+                    
+                    <div>
+                        <label>🕐 Check In Time:</label>
+                        <input type="time" id="editCheckInTime">
+                    </div>
+                    
+                    <div>
+                        <label>📍 Check In Location:</label>
+                        <input type="text" id="editCheckInLocation" placeholder="Enter check-in location">
+                    </div>
+                    
+                    <div>
+                        <label>🕕 Check Out Time:</label>
+                        <input type="time" id="editCheckOutTime">
+                    </div>
+                    
+                    <div>
+                        <label>📍 Check Out Location:</label>
+                        <input type="text" id="editCheckOutLocation" placeholder="Enter check-out location">
+                    </div>
+                    
+                    <div>
+                        <label>📝 Work Description/Notes:</label>
+                        <textarea id="editWorkDescription" placeholder="Describe work activities, meetings, projects, etc."></textarea>
+                    </div>
+                    
+                    <div>
+                        <label>🎉 Holiday/Event:</label>
+                        <input type="text" id="editHoliday" placeholder="Enter holiday or event name">
+                    </div>
+                    
+                    <div>
+                        <label>👤 Employee Name:</label>
+                        <input type="text" id="editEmployeeName" placeholder="Enter employee name">
+                    </div>
+                    
+                    <div>
+                        <label>🆔 Employee ID:</label>
+                        <input type="text" id="editEmployeeId" placeholder="Enter employee ID">
+                    </div>
+                </div>
+                
+                <div class="edit-buttons">
+                    <button class="btn btn-checkin" onclick="saveEdit()">💾 Save Changes</button>
+                    <button class="btn btn-delete" onclick="closeEdit()">❌ Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Global Variables
+        let attendanceData = [];
+        let isOnline = navigator.onLine;
+        let editingRecordId = null;
+        let deferredPrompt = null;
+        let isInstalled = false;
+        
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+            loadData();
+            updateDisplay();
+            updateConnectionStatus();
+            handleURLParams();
+            checkInstallStatus();
+        });
+        
+        function checkInstallStatus() {
+            // Check if already installed/running as standalone
+            if (window.matchMedia('(display-mode: standalone)').matches || 
+                window.navigator.standalone === true) {
+                isInstalled = true;
+                hideInstallBanner();
+            }
+        }
+        
+        function initializeApp() {
+            // Only show install banner if not already installed
+            if (!isInstalled) {
+                showInstallBanner();
+            }
+            
+            // Handle install prompt - this is the key for PC Chrome/Edge
+            window.addEventListener('beforeinstallprompt', function(e) {
+                console.log('PWA Install prompt triggered');
+                e.preventDefault(); // Prevent automatic showing
+                deferredPrompt = e; // Store for later use
+                
+                // Show our custom install banner
+                showInstallBanner();
+            });
+            
+            // Handle successful installation
+            window.addEventListener('appinstalled', function(e) {
+                console.log('PWA was successfully installed');
+                isInstalled = true;
+                hideInstallBanner();
+                showMessage('App installed successfully! Opening as standalone app...', 'success');
+                deferredPrompt = null;
+            });
+            
+            // Register service worker for offline functionality - FIXED VERSION
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                    navigator.serviceWorker.register('./sw.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registration successful');
+                        
+                        // Handle updates
+                        registration.addEventListener('updatefound', function() {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', function() {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // Show update available notification
+                                    if (confirm('New version available! Reload to update?')) {
+                                        newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                        window.location.reload();
+                                    }
+                                }
+                            });
+                        });
+                    })
+                    .catch(function(error) {
+                        console.log('ServiceWorker registration failed:', error);
+                        // Continue without service worker
+                    });
+                });
+            }
+        }
+        
+        function showInstallBanner() {
+            const banner = document.getElementById('installBanner');
+            if (banner && !isInstalled) {
+                banner.classList.remove('hidden');
+                banner.style.display = 'flex';
+            }
+        }
+        
+        function hideInstallBanner() {
+            const banner = document.getElementById('installBanner');
+            if (banner) {
+                banner.classList.add('hidden');
+                banner.style.display = 'none';
+            }
+        }
+        
+        function installApp() {
+            // First try native browser installation
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                
+                deferredPrompt.userChoice.then(function(choiceResult) {
+                    console.log('User choice:', choiceResult.outcome);
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                        isInstalled = true;
+                        hideInstallBanner();
+                    } else {
+                        console.log('User dismissed the install prompt');
+                        // Still show manual instructions
+                        showManualInstallInstructions();
+                    }
+                    deferredPrompt = null;
+                });
+            } else {
+                // Show manual installation instructions
+                showManualInstallInstructions();
+            }
+        }
+        
+        function showManualInstallInstructions() {
+            const userAgent = navigator.userAgent.toLowerCase();
+            const isIOS = /ipad|iphone|ipod/.test(userAgent);
+            const isAndroid = /android/.test(userAgent);
+            const isChrome = userAgent.includes('chrome') && !userAgent.includes('edge');
+            const isEdge = userAgent.includes('edge');
+            const isFirefox = userAgent.includes('firefox');
+            const isSafari = userAgent.includes('safari') && !userAgent.includes('chrome');
+            
+            let title = 'Install App Instructions';
+            let instructions = '';
+            
+            if (isIOS && isSafari) {
+                instructions = 'iOS Safari Installation:\n\n1. Tap the Share button at the bottom\n2. Scroll down and tap "Add to Home Screen"\n3. Tap "Add" to confirm\n4. The app will appear on your home screen\n\nYou can then use it offline!';
+            } else if (isAndroid && isChrome) {
+                instructions = 'Android Chrome Installation:\n\n1. Tap the menu in the top right\n2. Tap "Add to Home screen" or "Install app"\n3. Tap "Install" to confirm\n4. The app will be installed like a native app\n\nYou can then use it offline!';
+            } else if (isChrome) {
+                instructions = 'Desktop Chrome Installation:\n\n1. Look for the install icon in the address bar, OR\n2. Click the menu → "Install Attendance System..."\n3. Click "Install" to confirm\n4. The app will open in its own window\n\nYou can then use it offline!';
+            } else if (isEdge) {
+                instructions = 'Microsoft Edge Installation:\n\n1. Click the menu in the top right\n2. Go to "Apps" → "Install this site as an app"\n3. Click "Install" to confirm\n4. The app will be installed as a desktop app\n\nYou can then use it offline!';
+            } else if (isFirefox) {
+                instructions = 'Firefox Instructions:\n\nFirefox doesn\'t support app installation yet, but you can:\n\n1. Bookmark this page (Ctrl+D / Cmd+D)\n2. Access it anytime from bookmarks\n3. It works offline once loaded!\n\nFor best results, try Chrome or Edge';
+            } else {
+                instructions = 'General Instructions:\n\nLook for these options in your browser:\n• "Add to Home Screen" (mobile)\n• "Install App" (desktop)\n• Install icon in address bar\n• Browser menu → Apps/Install\n\nTry Chrome or Edge for best experience';
+            }
+            
+            alert(title + '\n\n' + instructions);
+        }
+        
+        function handleURLParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const action = urlParams.get('action');
+            
+            // Handle shortcuts from PWA
+            if (action === 'checkin') {
+                setTimeout(() => checkIn(), 1000);
+            } else if (action === 'checkout') {
+                setTimeout(() => checkOut(), 1000);
+            }
+        }
+        
+        // Modal Functions
+        function closeEdit() {
+            const modal = document.getElementById('editModal');
+            modal.style.display = 'none';
+            editingRecordId = null;
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('editModal');
+            if (modal.style.display !== 'none' && event.target === modal) {
+                closeEdit();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const modal = document.getElementById('editModal');
+                if (modal.style.display !== 'none') {
+                    closeEdit();
+                }
+            }
+        });
+        
+        // Enhanced description toggle function
+        function toggleDescription(element, recordId) {
+            const record = attendanceData.find(r => r.id === recordId);
+            if (!record || !record.workDescription) return;
+            
+            const isExpanded = element.classList.contains('description-full');
+            
+            if (isExpanded) {
+                // Collapse - show preview
+                element.className = 'description-preview clickable';
+                element.textContent = record.workDescription.length > 100 ? 
+                    record.workDescription.substring(0, 97) + '...' : 
+                    record.workDescription;
+            } else {
+                // Expand - show full text
+                element.className = 'description-full';
+                element.textContent = record.workDescription;
+            }
+        }
+        
+        // Time and Date Functions
+        function updateCurrentTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { 
+                hour12: true, 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit' 
+            });
+            const dateString = now.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            document.getElementById('currentTime').textContent = timeString;
+            document.getElementById('currentDate').textContent = dateString;
+        }
+        
+        // Connection Status
+        function updateConnectionStatus() {
+            const statusEl = document.getElementById('connectionStatus');
+            const iconEl = document.getElementById('statusIcon');
+            const textEl = document.getElementById('statusText');
+            
+            if (navigator.onLine) {
+                statusEl.className = 'status-indicator status-online pulse';
+                iconEl.textContent = '●';
+                textEl.textContent = 'Online - Ready for unlimited entries';
+                isOnline = true;
+            } else {
+                statusEl.className = 'status-indicator status-offline pulse';
+                iconEl.textContent = '●';
+                textEl.textContent = 'Offline - Data saved locally';
+                isOnline = false;
+            }
+        }
+        
+        window.addEventListener('online', updateConnectionStatus);
+        window.addEventListener('offline', updateConnectionStatus);
+        
+        // Data Management - Using localStorage with fallback
+        function saveData() {
+            try {
+                const dataToSave = {
+                    attendanceData: attendanceData,
+                    employeeName: document.getElementById('employeeName').value,
+                    employeeId: document.getElementById('employeeId').value,
+                    lastSaved: new Date().toISOString()
+                };
+                
+                if (typeof Storage !== 'undefined') {
+                    localStorage.setItem('attendanceSystemData', JSON.stringify(dataToSave));
+                }
+                
+                console.log('Data saved successfully');
+            } catch (e) {
+                console.warn('localStorage not available, using in-memory storage:', e);
+                // Data will persist in memory during session
+            }
+        }
+        
+        function loadData() {
+            try {
+                if (typeof Storage !== 'undefined') {
+                    const savedData = localStorage.getItem('attendanceSystemData');
+                    if (savedData) {
+                        const parsedData = JSON.parse(savedData);
+                        attendanceData = parsedData.attendanceData || [];
+                        
+                        if (parsedData.employeeName) {
+                            document.getElementById('employeeName').value = parsedData.employeeName;
+                        }
+                        if (parsedData.employeeId) {
+                            document.getElementById('employeeId').value = parsedData.employeeId;
+                        }
+                    }
+                }
+                console.log('Data loaded successfully');
+            } catch (e) {
+                console.warn('Error loading data:', e);
+                attendanceData = [];
+            }
+        }
+        
+        // Attendance Functions
+        function checkIn() {
+            const name = document.getElementById('employeeName').value.trim();
+            const empId = document.getElementById('employeeId').value.trim();
+            const location = document.getElementById('checkInLocation').value.trim();
+            const description = document.getElementById('workDescription').value.trim();
+            
+            if (!name || !empId) {
+                showMessage('Please enter employee name and ID before checking in', 'error');
+                return;
+            }
+            
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+            const time = now.toLocaleTimeString('en-US', { 
+                hour12: false,
+                hour: '2-digit', 
+                minute: '2-digit'
+            });
+            
+            const newRecord = {
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+                date: today,
+                checkInTime: time,
+                checkInLocation: location || 'Not specified',
+                checkOutTime: '',
+                checkOutLocation: '',
+                totalHours: '',
+                workDescription: description || '',
+                holidayEvent: '',
+                employeeName: name,
+                employeeId: empId,
+                type: 'checkin'
+            };
+            
+            attendanceData.unshift(newRecord);
+            saveData();
+            updateDisplay();
+            showMessage('Check-in recorded at ' + now.toLocaleTimeString('en-US', { hour12: true }), 'success');
+        }
+        
+        function checkOut() {
+            const name = document.getElementById('employeeName').value.trim();
+            const empId = document.getElementById('employeeId').value.trim();
+            const location = document.getElementById('checkInLocation').value.trim();
+            const description = document.getElementById('workDescription').value.trim();
+            
+            if (!name || !empId) {
+                showMessage('Please enter employee name and ID before checking out', 'error');
+                return;
+            }
+            
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+            const time = now.toLocaleTimeString('en-US', { 
+                hour12: false,
+                hour: '2-digit', 
+                minute: '2-digit'
+            });
+            
+            // Check if there's an open check-in for today
+            const openCheckIn = attendanceData.find(record => 
+                record.date === today && 
+                record.type === 'checkin' && 
+                record.employeeName === name &&
+                record.employeeId === empId &&
+                !record.checkOutTime
+            );
+            
+            if (openCheckIn) {
+                // Update existing check-in record
+                openCheckIn.checkOutTime = time;
+                openCheckIn.checkOutLocation = location || 'Not specified';
+                
+                // Update or append to work description
+                if (description) {
+                    if (openCheckIn.workDescription && openCheckIn.workDescription !== description) {
+                        openCheckIn.workDescription += ' | ' + description;
+                    } else if (!openCheckIn.workDescription) {
+                        openCheckIn.workDescription = description;
+                    }
+                }
+                
+                // Calculate total hours
+                if (openCheckIn.checkInTime && openCheckIn.checkOutTime) {
+                    const checkInTime = new Date(today + ' ' + openCheckIn.checkInTime);
+                    const checkOutTime = new Date(today + ' ' + openCheckIn.checkOutTime);
+                    const diffMs = checkOutTime - checkInTime;
+                    if (diffMs >= 0) {
+                        const diffHours = Math.round((diffMs / (1000 * 60 * 60)) * 100) / 100;
+                        openCheckIn.totalHours = diffHours.toFixed(2);
+                    } else {
+                        openCheckIn.totalHours = '0.00';
+                    }
+                }
+                
+                showMessage('Check-out recorded at ' + now.toLocaleTimeString('en-US', { hour12: true }), 'success');
+            } else {
+                // Create standalone check-out record
+                const newRecord = {
+                    id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+                    date: today,
+                    checkInTime: '',
+                    checkInLocation: '',
+                    checkOutTime: time,
+                    checkOutLocation: location || 'Not specified',
+                    totalHours: '',
+                    workDescription: description || '',
+                    holidayEvent: '',
+                    employeeName: name,
+                    employeeId: empId,
+                    type: 'checkout'
+                };
+                
+                attendanceData.unshift(newRecord);
+                showMessage('Check-out recorded at ' + now.toLocaleTimeString('en-US', { hour12: true }), 'success');
+            }
+            
+            saveData();
+            updateDisplay();
+        }
+        
+        function markHoliday() {
+            const name = document.getElementById('employeeName').value.trim();
+            const empId = document.getElementById('employeeId').value.trim();
+            const description = document.getElementById('workDescription').value.trim();
+            
+            if (!name || !empId) {
+                showMessage('Please enter employee name and ID before marking holiday', 'error');
+                return;
+            }
+            
+            const holidayName = prompt("Enter holiday/event name:");
+            if (holidayName === null) return; // User cancelled
+            
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+            
+            const newRecord = {
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+                date: today,
+                checkInTime: 'Holiday',
+                checkInLocation: 'Holiday',
+                checkOutTime: 'Holiday',
+                checkOutLocation: 'Holiday',
+                totalHours: 'Holiday',
+                workDescription: description || '',
+                holidayEvent: holidayName || 'Holiday',
+                employeeName: name,
+                employeeId: empId,
+                type: 'holiday'
+            };
+            
+            attendanceData.unshift(newRecord);
+            saveData();
+            updateDisplay();
+            showMessage('Holiday marked successfully: ' + (holidayName || 'Holiday'), 'success');
+        }
+        
+        // Edit Functions
+        function editRecord(recordId) {
+            const record = attendanceData.find(r => r.id === recordId);
+            if (!record) return;
+            
+            editingRecordId = recordId;
+            
+            // Populate edit form
+            document.getElementById('editDate').value = record.date;
+            document.getElementById('editCheckInTime').value = record.checkInTime === 'Holiday' ? '' : record.checkInTime;
+            document.getElementById('editCheckInLocation').value = record.checkInLocation === 'Holiday' ? '' : record.checkInLocation;
+            document.getElementById('editCheckOutTime').value = record.checkOutTime === 'Holiday' ? '' : record.checkOutTime;
+            document.getElementById('editCheckOutLocation').value = record.checkOutLocation === 'Holiday' ? '' : record.checkOutLocation;
+            document.getElementById('editWorkDescription').value = record.workDescription || '';
+            document.getElementById('editHoliday').value = record.holidayEvent || '';
+            document.getElementById('editEmployeeName').value = record.employeeName || '';
+            document.getElementById('editEmployeeId').value = record.employeeId || '';
+            
+            document.getElementById('editModal').style.display = 'flex';
+        }
+        
+        function saveEdit() {
+            if (!editingRecordId) return;
+            
+            const record = attendanceData.find(r => r.id === editingRecordId);
+            if (!record) return;
+            
+            // Get form values
+            const newDate = document.getElementById('editDate').value;
+            const newCheckInTime = document.getElementById('editCheckInTime').value;
+            const newCheckOutTime = document.getElementById('editCheckOutTime').value;
+            const newHoliday = document.getElementById('editHoliday').value;
+            
+            // Update record with new values
+            record.date = newDate;
+            record.checkInTime = newCheckInTime || (newHoliday ? 'Holiday' : '');
+            record.checkInLocation = document.getElementById('editCheckInLocation').value || (newHoliday ? 'Holiday' : 'Not specified');
+            record.checkOutTime = newCheckOutTime || (newHoliday ? 'Holiday' : '');
+            record.checkOutLocation = document.getElementById('editCheckOutLocation').value || (newHoliday ? 'Holiday' : 'Not specified');
+            record.workDescription = document.getElementById('editWorkDescription').value || '';
+            record.holidayEvent = newHoliday || '';
+            record.employeeName = document.getElementById('editEmployeeName').value || 'Not specified';
+            record.employeeId = document.getElementById('editEmployeeId').value || 'Not specified';
+            
+            // Recalculate total hours if both times are provided
+            if (record.checkInTime !== 'Holiday' && record.checkOutTime !== 'Holiday' && 
+                record.checkInTime && record.checkOutTime) {
+                const checkInTime = new Date(record.date + ' ' + record.checkInTime);
+                const checkOutTime = new Date(record.date + ' ' + record.checkOutTime);
+                const diffMs = checkOutTime - checkInTime;
+                if (diffMs >= 0) {
+                    const diffHours = Math.round((diffMs / (1000 * 60 * 60)) * 100) / 100;
+                    record.totalHours = diffHours.toFixed(2);
+                } else {
+                    record.totalHours = '0.00';
+                }
+            } else if (record.holidayEvent || newHoliday) {
+                record.totalHours = 'Holiday';
+                record.type = 'holiday';
+            }
+            
+            closeEdit();
+            saveData();
+            updateDisplay();
+            showMessage('Record updated successfully!', 'success');
+        }
+        
+        // Delete Functions
+        function deleteRecord(recordId) {
+            if (confirm('Are you sure you want to delete this record?')) {
+                attendanceData = attendanceData.filter(record => record.id !== recordId);
+                saveData();
+                updateDisplay();
+                showMessage('Record deleted successfully!', 'success');
+            }
+        }
+        
+        function deleteAllData() {
+            if (confirm('Are you sure you want to delete ALL data? This action cannot be undone.')) {
+                attendanceData = [];
+                if (typeof Storage !== 'undefined') {
+                    localStorage.removeItem('attendanceSystemData');
+                }
+                document.getElementById('employeeName').value = '';
+                document.getElementById('employeeId').value = '';
+                document.getElementById('workDescription').value = '';
+                updateDisplay();
+                showMessage('All data cleared successfully!', 'success');
+            }
+        }
+        
+        // Display Functions
+        function updateDisplay() {
+            updateAttendanceTable();
+            updateStats();
+        }
+        
+        function updateAttendanceTable() {
+            const tbody = document.getElementById('attendanceTableBody');
+            const noDataMsg = document.getElementById('noDataMessage');
+            
+            if (attendanceData.length === 0) {
+                tbody.innerHTML = '';
+                noDataMsg.style.display = 'block';
+                return;
+            }
+            
+            noDataMsg.style.display = 'none';
+            
+            // Sort data by date (newest first)
+            const sortedData = [...attendanceData].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            tbody.innerHTML = sortedData.map(record => {
+                const rowClass = record.type === 'holiday' || record.holidayEvent ? 'holiday-row' : '';
+                
+                // Enhanced description display with click functionality
+                let descriptionHtml = '-';
+                if (record.workDescription && record.workDescription.trim()) {
+                    const isLong = record.workDescription.length > 100;
+                    const previewText = isLong ? record.workDescription.substring(0, 97) + '...' : record.workDescription;
+                    
+                    descriptionHtml = '<div class="description-preview ' + (isLong ? 'clickable' : '') + '" onclick="toggleDescription(this, \'' + record.id + '\')" title="' + record.workDescription.replace(/"/g, '&quot;') + '">' + previewText + '</div>';
+                }
+                
+                return '<tr class="' + rowClass + '">' +
+                    '<td>' + formatDate(record.date) + '</td>' +
+                    '<td>' + (record.checkInTime || '-') + '</td>' +
+                    '<td>' + (record.checkInLocation || '-') + '</td>' +
+                    '<td>' + (record.checkOutTime || '-') + '</td>' +
+                    '<td>' + (record.checkOutLocation || '-') + '</td>' +
+                    '<td>' + (record.totalHours ? (record.totalHours === 'Holiday' ? 'Holiday' : record.totalHours + 'h') : '-') + '</td>' +
+                    '<td class="description-cell">' + descriptionHtml + '</td>' +
+                    '<td>' + (record.holidayEvent || '-') + '</td>' +
+                    '<td>' + (record.employeeName || '-') + '<br><small>' + (record.employeeId || '-') + '</small></td>' +
+                    '<td>' +
+                        '<button class="btn-edit" onclick="editRecord(\'' + record.id + '\')" title="Edit Record">Edit</button>' +
+                        '<button class="btn-delete" onclick="deleteRecord(\'' + record.id + '\')" title="Delete Record">Delete</button>' +
+                    '</td>' +
+                '</tr>';
+            }).join('');
+        }
+        
+        function updateStats() {
+            const workingDays = new Set(
+                attendanceData
+                    .filter(record => record.type !== 'holiday' && record.checkInTime && record.checkInTime !== 'Holiday')
+                    .map(record => record.date)
+            ).size;
+            
+            const totalHours = attendanceData.reduce((sum, record) => {
+                const hours = parseFloat(record.totalHours);
+                return sum + (isNaN(hours) ? 0 : hours);
+            }, 0);
+            
+            const holidayCount = attendanceData.filter(record => 
+                record.type === 'holiday' || record.holidayEvent
+            ).length;
+            
+            const totalEntries = attendanceData.length;
+            
+            document.getElementById('totalDays').textContent = workingDays;
+            document.getElementById('totalHours').textContent = Math.round(totalHours);
+            document.getElementById('holidayCount').textContent = holidayCount;
+            document.getElementById('totalEntries').textContent = totalEntries;
+        }
+        
+        function formatDate(dateStr) {
+            return new Date(dateStr).toLocaleDateString('en-US', { 
+                weekday: 'short',
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+        }
+        
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('statusMessage');
+            messageDiv.textContent = message;
+            messageDiv.className = 'status-message ' + type;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Enhanced Download Functions for PC Compatibility
+        function downloadCSVReport() {
+            try {
+                if (attendanceData.length === 0) {
+                    showMessage('No data to export', 'error');
+                    return;
+                }
+                
+                showMessage('Preparing CSV download...', 'success');
+                
+                // Create CSV header with BOM for UTF-8
+                let csvContent = '\ufeff';
+                csvContent += 'Date,Check In Time,Check In Location,Check Out Time,Check Out Location,Total Hours,Work Description/Notes,Holiday/Event,Employee Name,Employee ID,Type\n';
+                
+                const sortedData = [...attendanceData].sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                sortedData.forEach(record => {
+                    // Properly escape CSV fields
+                    const escapeCSV = (field) => {
+                        if (field === null || field === undefined) return '';
+                        const str = String(field);
+                        if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+                            return '"' + str.replace(/"/g, '""') + '"';
+                        }
+                        return str;
+                    };
+                    
+                    csvContent += [
+                        escapeCSV(record.date),
+                        escapeCSV(record.checkInTime),
+                        escapeCSV(record.checkInLocation),
+                        escapeCSV(record.checkOutTime),
+                        escapeCSV(record.checkOutLocation),
+                        escapeCSV(record.totalHours),
+                        escapeCSV(record.workDescription),
+                        escapeCSV(record.holidayEvent),
+                        escapeCSV(record.employeeName),
+                        escapeCSV(record.employeeId),
+                        escapeCSV(record.type || 'attendance')
+                    ].join(',') + '\n';
+                });
+                
+                const fileName = 'attendance-report-' + new Date().toISOString().split('T')[0] + '.csv';
+                
+                // Enhanced download method for better PC compatibility
+                if (downloadViaBlob(csvContent, fileName, 'text/csv')) {
+                    showMessage('CSV download started! Check your Downloads folder.', 'success');
+                } else {
+                    // Fallback: show data in new window for manual save
+                    fallbackDownload(csvContent, fileName, 'CSV');
+                }
+                
+            } catch (error) {
+                console.error('Error downloading CSV:', error);
+                showMessage('Download error. Trying alternative method...', 'error');
+                
+                // Emergency fallback
+                const csvContent = generateCSVContent();
+                fallbackDownload(csvContent, 'attendance-report.csv', 'CSV');
+            }
+        }
+        
+        function downloadPDFReport() {
+            try {
+                if (attendanceData.length === 0) {
+                    showMessage('No data to export', 'error');
+                    return;
+                }
+                
+                showMessage('Preparing report download...', 'success');
+                
+                const content = generateReportContent();
+                const fileName = 'attendance-report-' + new Date().toISOString().split('T')[0] + '.txt';
+                
+                // Enhanced download method for better PC compatibility
+                if (downloadViaBlob(content, fileName, 'text/plain')) {
+                    showMessage('Report download started! Check your Downloads folder.', 'success');
+                } else {
+                    // Fallback: show data in new window for manual save
+                    fallbackDownload(content, fileName, 'Text Report');
+                }
+                
+            } catch (error) {
+                console.error('Error downloading report:', error);
+                showMessage('Download error. Trying alternative method...', 'error');
+                
+                // Emergency fallback
+                const content = generateReportContent();
+                fallbackDownload(content, 'attendance-report.txt', 'Text Report');
+            }
+        }
+        
+        // Enhanced blob download function
+        function downloadViaBlob(content, fileName, mimeType) {
+            try {
+                // Method 1: Standard blob download
+                const blob = new Blob([content], { type: mimeType + ';charset=utf-8;' });
+                
+                // IE/Edge support
+                if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+                    window.navigator.msSaveOrOpenBlob(blob, fileName);
+                    return true;
+                }
+                
+                // Modern browsers
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                
+                link.href = url;
+                link.download = fileName;
+                link.style.position = 'absolute';
+                link.style.left = '-9999px';
+                link.style.visibility = 'hidden';
+                
+                document.body.appendChild(link);
+                
+                // Force download with multiple attempts
+                setTimeout(() => {
+                    try {
+                        link.click();
+                    } catch (e) {
+                        // Fallback click
+                        const event = document.createEvent('MouseEvents');
+                        event.initEvent('click', true, true);
+                        link.dispatchEvent(event);
+                    }
+                }, 100);
+                
+                // Cleanup
+                setTimeout(() => {
+                    if (document.body.contains(link)) {
+                        document.body.removeChild(link);
+                    }
+                    URL.revokeObjectURL(url);
+                }, 2000);
+                
+                return true;
+                
+            } catch (error) {
+                console.error('Blob download failed:', error);
+                return false;
+            }
+        }
+        
+        // Fallback download method - opens in new window
+        function fallbackDownload(content, fileName, type) {
+            try {
+                const newWindow = window.open('', '_blank');
+                if (newWindow) {
+                    newWindow.document.write('<html><head><title>' + type + ' - ' + fileName + '</title></head><body>');
+                    newWindow.document.write('<h2>' + type + ' Data</h2>');
+                    newWindow.document.write('<p><strong>File:</strong> ' + fileName + '</p>');
+                    newWindow.document.write('<p><strong>Instructions:</strong> Copy the data below and save it as a file on your computer.</p>');
+                    newWindow.document.write('<hr>');
+                    newWindow.document.write('<pre style="white-space: pre-wrap; word-wrap: break-word; font-family: monospace; font-size: 12px;">');
+                    newWindow.document.write(content.replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+                    newWindow.document.write('</pre>');
+                    newWindow.document.write('</body></html>');
+                    newWindow.document.close();
+                    
+                    showMessage('Data opened in new window. Please copy and save manually.', 'success');
+                    return true;
+                }
+            } catch (error) {
+                console.error('Fallback download failed:', error);
+                
+                // Ultimate fallback - show alert with data
+                const shortContent = content.length > 1000 ? content.substring(0, 1000) + '...[truncated]' : content;
+                alert('Download failed. Here is your data:\n\nFilename: ' + fileName + '\n\n' + shortContent + '\n\nPlease copy this data and save it manually.');
+                return false;
+            }
+        }
+        
+        // Helper function to generate CSV content
+        function generateCSVContent() {
+            let csvContent = '\ufeff';
+            csvContent += 'Date,Check In Time,Check In Location,Check Out Time,Check Out Location,Total Hours,Work Description/Notes,Holiday/Event,Employee Name,Employee ID,Type\n';
+            
+            const sortedData = [...attendanceData].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sortedData.forEach(record => {
+                const escapeCSV = (field) => {
+                    if (field === null || field === undefined) return '';
+                    const str = String(field);
+                    if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+                        return '"' + str.replace(/"/g, '""') + '"';
+                    }
+                    return str;
+                };
+                
+                csvContent += [
+                    escapeCSV(record.date),
+                    escapeCSV(record.checkInTime),
+                    escapeCSV(record.checkInLocation),
+                    escapeCSV(record.checkOutTime),
+                    escapeCSV(record.checkOutLocation),
+                    escapeCSV(record.totalHours),
+                    escapeCSV(record.workDescription),
+                    escapeCSV(record.holidayEvent),
+                    escapeCSV(record.employeeName),
+                    escapeCSV(record.employeeId),
+                    escapeCSV(record.type || 'attendance')
+                ].join(',') + '\n';
+            });
+            
+            return csvContent;
+        }
+        
+        function generateReportContent() {
+            let content = 'ATTENDANCE REPORT\n';
+            content += '==================\n\n';
+            content += 'Generated on: ' + new Date().toLocaleDateString() + '\n';
+            content += 'Generated at: ' + new Date().toLocaleTimeString() + '\n\n';
+            
+            // Stats
+            const workingDays = new Set(
+                attendanceData
+                    .filter(record => record.type !== 'holiday' && record.checkInTime && record.checkInTime !== 'Holiday')
+                    .map(record => record.date)
+            ).size;
+            
+            const totalHours = attendanceData.reduce((sum, record) => {
+                const hours = parseFloat(record.totalHours);
+                return sum + (isNaN(hours) ? 0 : hours);
+            }, 0);
+            
+            content += 'Total Working Days: ' + workingDays + '\n';
+            content += 'Total Hours: ' + Math.round(totalHours) + 'h\n';
+            content += 'Total Entries: ' + attendanceData.length + '\n\n';
+            
+            content += 'DETAILED RECORDS:\n';
+            content += '-'.repeat(100) + '\n\n';
+            
+            const sortedData = [...attendanceData].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sortedData.forEach((record, index) => {
+                content += 'Entry ' + (index + 1) + ':\n';
+                content += '  Date: ' + formatDate(record.date) + '\n';
+                content += '  Check In: ' + (record.checkInTime || '-') + '\n';
+                content += '  Check In Location: ' + (record.checkInLocation || '-') + '\n';
+                content += '  Check Out: ' + (record.checkOutTime || '-') + '\n';
+                content += '  Check Out Location: ' + (record.checkOutLocation || '-') + '\n';
+                content += '  Duration: ' + (record.totalHours ? (record.totalHours === 'Holiday' ? 'Holiday' : record.totalHours + 'h') : '-') + '\n';
+                content += '  Description: ' + (record.workDescription || '-') + '\n';
+                content += '  Holiday/Event: ' + (record.holidayEvent || '-') + '\n';
+                content += '  Employee: ' + (record.employeeName || '-') + ' (' + (record.employeeId || '-') + ')\n';
+                content += '\n' + '-'.repeat(50) + '\n\n';
+            });
+            
+            return content;
+        }
+        
+        // Auto-save employee info
+        document.getElementById('employeeName').addEventListener('input', function() {
+            saveData();
+        });
+        
+        document.getElementById('employeeId').addEventListener('input', function() {
+            saveData();
+        });
+        
+        // Prevent form submission on Enter key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON') {
+                e.preventDefault();
+            }
+        });
+        
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'i':
+                    case 'I':
+                        e.preventDefault();
+                        checkIn();
+                        break;
+                    case 'o':
+                    case 'O':
+                        e.preventDefault();
+                        checkOut();
+                        break;
+                    case 'h':
+                    case 'H':
+                        e.preventDefault();
+                        markHoliday();
+                        break;
+                    case 's':
+                    case 'S':
+                        e.preventDefault();
+                        downloadCSVReport();
+                        break;
+                }
+            }
+        });
+        
+        // Add visibility change handler for PWA
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                // App became visible, update time and check connection
+                updateCurrentTime();
+                updateConnectionStatus();
+            }
+        });
+        
+        // Handle page refresh/close
+        window.addEventListener('beforeunload', function(e) {
+            // Save any pending changes
+            saveData();
+        });
+        
+        // Initialize app when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        } else {
+            initializeApp();
+        }
+    </script>
+</body>
+</html>
