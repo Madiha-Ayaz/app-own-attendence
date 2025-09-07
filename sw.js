@@ -1,184 +1,207 @@
-const CACHE_NAME = 'attendance-system-v1.0';
+const CACHE_NAME = 'attendance-system-v2.0';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-72x72.png',
-  '/icon-96x96.png',
-  '/icon-128x128.png',
-  '/icon-144x144.png',
-  '/icon-152x152.png',
-  '/icon-192x192.png',
-  '/icon-384x384.png',
-  '/icon-512x512.png'
+  './',
+  './index.html',
+  './manifest.json',
+  // Cache jsPDF and AutoTable for offline PDF support
+  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js'
 ];
 
 // Install event - cache resources
-self.addEventListener('install', function(event) {
-  console.log('[SW] Install event');
+self.addEventListener('install', (event) => {
+  console.log('SW: Installing Enhanced Attendance System v2.0...');
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(function(cache) {
-        console.log('[SW] Caching app shell');
+      .then((cache) => {
+        console.log('SW: Caching essential files');
         return cache.addAll(urlsToCache);
       })
-      .catch(function(error) {
-        console.log('[SW] Failed to cache:', error);
+      .then(() => {
+        console.log('SW: Installation complete');
+        return self.skipWaiting();
+      })
+      .catch((error) => {
+        console.error('SW: Installation failed', error);
       })
   );
-  self.skipWaiting();
 });
 
-// Activate event - clean up old caches
-self.addEventListener('activate', function(event) {
-  console.log('[SW] Activate event');
+// Activate event - cleanup old caches
+self.addEventListener('activate', (event) => {
+  console.log('SW: Activating Enhanced Attendance System...');
   event.waitUntil(
-    caches.keys().then(function(cacheNames) {
-      return Promise.all(
-        cacheNames.map(function(cacheName) {
-          if (cacheName !== CACHE_NAME) {
-            console.log('[SW] Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    caches.keys()
+      .then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (cacheName !== CACHE_NAME) {
+              console.log('SW: Deleting old cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      })
+      .then(() => {
+        console.log('SW: Activation complete');
+        return self.clients.claim();
+      })
+      .catch((error) => {
+        console.error('SW: Activation failed', error);
+      })
   );
-  self.clients.claim();
 });
 
-// Fetch event - serve from cache, fallback to network
-self.addEventListener('fetch', function(event) {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') {
+// Fetch event - serve cached content and handle PDF libraries
+self.addEventListener('fetch', (event) => {
+  const requestURL = event.request.url;
+  
+  // Handle PDF library requests with priority caching
+  if (
+    requestURL.includes('jspdf.umd.min.js') ||
+    requestURL.includes('jspdf.plugin.autotable.min.js')
+  ) {
+    event.respondWith(
+      caches.match(event.request)
+        .then((cachedResponse) => {
+          if (cachedResponse) {
+            console.log('SW: Serving PDF library from cache');
+            return cachedResponse;
+          }
+          
+          // Try to fetch and cache if not present
+          return fetch(event.request)
+            .then((networkResponse) => {
+              if (networkResponse && networkResponse.status === 200) {
+                console.log('SW: Caching PDF library from network');
+                const responseToCache = networkResponse.clone();
+                caches.open(CACHE_NAME)
+                  .then((cache) => {
+                    cache.put(event.request, responseToCache);
+                  });
+              }
+              return networkResponse;
+            })
+            .catch((error) => {
+              console.warn('SW: PDF library not available offline', error);
+              // Return a fallback response for PDF libraries
+              return new Response(
+                '// PDF library not available offline. Please connect to internet for PDF export functionality.',
+                {
+                  status: 503,
+                  statusText: 'Service Unavailable',
+                  headers: { 
+                    'Content-Type': 'application/javascript',
+                    'Cache-Control': 'no-cache'
+                  }
+                }
+              );
+            });
+        })
+    );
     return;
   }
-
-  // Skip chrome-extension and other non-http requests
-  if (!event.request.url.startsWith('http')) {
-    return;
-  }
-
+  
+  // Handle app shell and other requests
   event.respondWith(
     caches.match(event.request)
-      .then(function(response) {
-        // Return cached version if available
-        if (response) {
-          console.log('[SW] Serving from cache:', event.request.url);
-          return response;
+      .then((cachedResponse) => {
+        if (cachedResponse) {
+          // Serve from cache
+          return cachedResponse;
         }
-
-        // Otherwise, fetch from network
-        console.log('[SW] Fetching from network:', event.request.url);
+        
+        // Try network first, then cache the response
         return fetch(event.request)
-          .then(function(response) {
-            // Check if valid response
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
+          .then((networkResponse) => {
+            // Check if we received a valid response
+            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+              return networkResponse;
             }
-
-            // Clone response for caching
-            const responseToCache = response.clone();
-
+            
+            // Clone the response for caching
+            const responseToCache = networkResponse.clone();
+            
             caches.open(CACHE_NAME)
-              .then(function(cache) {
+              .then((cache) => {
                 cache.put(event.request, responseToCache);
               });
-
-            return response;
-          })
-          .catch(function(error) {
-            console.log('[SW] Fetch failed:', error);
             
-            // Return offline page for navigation requests
-            if (event.request.destination === 'document') {
-              return caches.match('/');
+            return networkResponse;
+          })
+          .catch(() => {
+            // Network failed, try to serve app shell for navigation requests
+            if (event.request.mode === 'navigate') {
+              console.log('SW: Serving app shell for navigation request');
+              return caches.match('./index.html');
             }
             
-            // For other requests, just fail
-            throw error;
+            // For other requests, return a generic offline response
+            return new Response('Offline - Content not available', {
+              status: 503,
+              statusText: 'Service Unavailable',
+              headers: { 'Content-Type': 'text/plain' }
+            });
           });
       })
   );
 });
 
-// Background sync for attendance data (future enhancement)
-self.addEventListener('sync', function(event) {
+// Handle background sync for future enhancements
+self.addEventListener('sync', (event) => {
+  console.log('SW: Background sync triggered');
   if (event.tag === 'attendance-sync') {
-    console.log('[SW] Background sync triggered');
-    event.waitUntil(syncAttendanceData());
-  }
-});
-
-// Handle push notifications (future enhancement)
-self.addEventListener('push', function(event) {
-  console.log('[SW] Push notification received');
-  
-  const options = {
-    body: event.data ? event.data.text() : 'New attendance notification',
-    icon: '/icon-192x192.png',
-    badge: '/icon-72x72.png',
-    vibrate: [100, 50, 100],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: 1
-    },
-    actions: [
-      {
-        action: 'explore',
-        title: 'Open App',
-        icon: '/icon-192x192.png'
-      },
-      {
-        action: 'close',
-        title: 'Close',
-        icon: '/icon-192x192.png'
-      }
-    ]
-  };
-
-  event.waitUntil(
-    self.registration.showNotification('Attendance System', options)
-  );
-});
-
-// Handle notification clicks
-self.addEventListener('notificationclick', function(event) {
-  console.log('[SW] Notification clicked');
-  event.notification.close();
-
-  if (event.action === 'explore') {
     event.waitUntil(
-      clients.openWindow('/')
+      // Future: sync attendance data to server
+      Promise.resolve()
     );
   }
 });
 
-// Function to sync attendance data (placeholder)
-function syncAttendanceData() {
-  return new Promise((resolve) => {
-    // This would sync local storage data with a server
-    // For now, just resolve
-    console.log('[SW] Syncing attendance data...');
-    setTimeout(resolve, 1000);
-  });
-}
-
-// Handle messages from main thread
-self.addEventListener('message', function(event) {
-  console.log('[SW] Message received:', event.data);
+// Handle push notifications for future enhancements
+self.addEventListener('push', (event) => {
+  console.log('SW: Push notification received');
+  const options = {
+    body: 'Don\'t forget to check in/out!',
+    icon: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"%3E%3Crect width="96" height="96" rx="20" fill="%23667eea"/%3E%3Ctext x="48" y="60" font-size="40" text-anchor="middle" fill="white"%3E⏰%3C/text%3E%3C/svg%3E',
+    badge: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"%3E%3Crect width="96" height="96" rx="20" fill="%23667eea"/%3E%3Ctext x="48" y="60" font-size="40" text-anchor="middle" fill="white"%3E⏰%3C/text%3E%3C/svg%3E',
+    tag: 'attendance-reminder',
+    requireInteraction: false
+  };
   
+  event.waitUntil(
+    self.registration.showNotification('Attendance Reminder', options)
+  );
+});
+
+// Handle notification clicks
+self.addEventListener('notificationclick', (event) => {
+  console.log('SW: Notification clicked');
+  event.notification.close();
+  
+  event.waitUntil(
+    clients.openWindow('./')
+  );
+});
+
+// Handle app shortcuts
+self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
-  
-  if (event.data && event.data.type === 'CACHE_REFRESH') {
-    // Force cache refresh
-    caches.delete(CACHE_NAME).then(() => {
-      console.log('[SW] Cache refreshed');
-    });
+});
+
+// Periodic background sync for cache updates
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === 'cache-update') {
+    event.waitUntil(
+      // Update cache with latest resources
+      caches.open(CACHE_NAME)
+        .then((cache) => {
+          return cache.addAll(urlsToCache);
+        })
+    );
   }
 });
 
-// Log when service worker is ready
-console.log('[SW] Service Worker loaded and ready');
+console.log('SW: Enhanced Attendance System Service Worker loaded');

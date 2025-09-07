@@ -1,65 +1,51 @@
 {
   "version": 2,
   "name": "unlimited-attendance-system",
-  "public": true,
-  "rewrites": [
+  "regions": ["cle1", "iad1", "pdx1"],
+  "routes": [
     {
-      "source": "/sw.js",
-      "destination": "/sw.js"
+      "src": "/sw.js",
+      "headers": {
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "Content-Type": "application/javascript; charset=utf-8",
+        "Service-Worker-Allowed": "/"
+      }
     },
     {
-      "source": "/manifest.json",
-      "destination": "/manifest.json"
+      "src": "/manifest.json",
+      "headers": {
+        "Cache-Control": "public, max-age=86400",
+        "Content-Type": "application/manifest+json; charset=utf-8"
+      }
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "/favicon.ico",
+      "headers": {
+        "Cache-Control": "public, max-age=2592000",
+        "Content-Type": "image/x-icon"
+      }
+    },
+    {
+      "src": "^/(?:index\\.html)?(?:\\?.*)?$",
+      "headers": {
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "Content-Type": "text/html; charset=utf-8",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "X-XSS-Protection": "1; mode=block",
+        "Referrer-Policy": "strict-origin-when-cross-origin"
+      },
+      "dest": "/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "headers": {
+        "Cache-Control": "public, max-age=0, must-revalidate"
+      },
+      "dest": "/index.html"
     }
   ],
   "headers": [
-    {
-      "source": "/sw.js",
-      "headers": [
-        {
-          "key": "Service-Worker-Allowed",
-          "value": "/"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
-        },
-        {
-          "key": "Content-Type",
-          "value": "application/javascript; charset=utf-8"
-        }
-      ]
-    },
-    {
-      "source": "/manifest.json",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "application/manifest+json; charset=utf-8"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/index.html",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
-        },
-        {
-          "key": "Content-Type",
-          "value": "text/html; charset=utf-8"
-        }
-      ]
-    },
     {
       "source": "/(.*)",
       "headers": [
@@ -69,28 +55,25 @@
         },
         {
           "key": "X-Frame-Options",
-          "value": "SAMEORIGIN"
+          "value": "DENY"
         },
         {
           "key": "X-XSS-Protection",
           "value": "1; mode=block"
         },
         {
-          "key": "Referrer-Policy",
-          "value": "strict-origin-when-cross-origin"
-        },
-        {
-          "key": "Permissions-Policy",
-          "value": "camera=(), microphone=(), geolocation=(), payment=()"
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
         }
       ]
     }
   ],
-  "functions": {},
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+  "functions": {
+    "index.html": {
+      "maxDuration": 10
     }
-  ]
+  },
+  "buildCommand": "echo 'No build needed - static files'",
+  "outputDirectory": "./",
+  "framework": null
 }
