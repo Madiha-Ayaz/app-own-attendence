@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "name": "unlimited-attendance-system",
+  "name": "my-new-attendance-app",
   "regions": ["cle1", "iad1", "pdx1"],
   "routes": [
     {
