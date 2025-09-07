@@ -1,6 +1,7 @@
 {
   "version": 2,
-  "name": "my-attendance-system-v2",  🚨 // This is the only line you need to change.
+  "name": "my-attendance-app-2025-v3", 🚨 // Change this to a new, unique name
+  "regions": ["cle1", "iad1", "pdx1"],
   "routes": [
     {
       "src": "/sw.js",
@@ -67,6 +68,11 @@
       ]
     }
   ],
+  "functions": {
+    "index.html": {
+      "maxDuration": 10
+    }
+  },
   "buildCommand": "echo 'No build needed - static files'",
   "outputDirectory": "./",
   "framework": null
