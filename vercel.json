@@ -1,7 +1,6 @@
 {
   "version": 2,
   "name": "my-new-attendance-app-123",
-  "regions": ["cle1", "iad1", "pdx1"],
   "routes": [
     {
       "src": "/sw.js",
