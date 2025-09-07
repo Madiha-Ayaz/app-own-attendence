@@ -45,11 +45,6 @@
       "dest": "/index.html"
     }
   ],
-  "functions": {
-    "index.html": {
-      "maxDuration": 10
-    }
-  },
   "buildCommand": "echo 'No build needed - static files'",
   "outputDirectory": "./",
   "framework": null
