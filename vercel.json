@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "name": "my-new-attendance-app-123",
+  "name": "my-attendance-system-v2",  🚨 // This is the only line you need to change.
   "routes": [
     {
       "src": "/sw.js",
